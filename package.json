@@ -1,0 +1,16 @@
+{
+  "name": "think-rugs-licensed-brands",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Think Rugs Licensed Brands site: landing page plus Scion Living, Harlequin and Clarke & Clarke brochures",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "preview": "npx serve@latest out"
+  },
+  "dependencies": {
+    "next": "^15.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

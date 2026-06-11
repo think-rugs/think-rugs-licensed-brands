@@ -1,0 +1,46 @@
+/* Landing page styles, matching the Think Rugs New Products brochure language. */
+:root {
+  --sage:#749981; --sage-deep:#587a66; --sage-dark:#3f5c4b; --sage-tint:#eef3ef; --sage-line:#d8e3da;
+  --tr-ink:#2c332e; --tr-grey:#6e756f; --tr-line:#e4e8e4; --paper:#ffffff; --wash:#fafbfa;
+  --tr-shadow:0 10px 30px rgba(44,51,46,.10);
+}
+.landing { font-family:'Poppins',-apple-system,'Segoe UI',sans-serif; color:var(--tr-ink); background:var(--paper); font-size:15px; line-height:1.6; }
+.landing img { display:block; max-width:100%; }
+.landing a { color:inherit; }
+.landing :focus-visible { outline:3px solid var(--sage); outline-offset:2px; border-radius:4px; }
+
+.lp-cover { min-height:45vh; background:var(--sage); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:26px 24px 30px; position:relative; }
+.lp-cover img.lp-logo { width:min(295px,58vw); margin-bottom:6px; }
+.lp-cover .lp-eyebrow { letter-spacing:.32em; text-transform:uppercase; font-size:11px; font-weight:500; opacity:.92; margin-bottom:10px; }
+.lp-cover h1 { font-size:clamp(28px,4.2vw,44px); font-weight:600; line-height:1.1; }
+.lp-cover h1 span { font-weight:300; display:block; font-size:.52em; letter-spacing:.04em; margin-top:6px; }
+.lp-stats { display:flex; gap:clamp(20px,5vw,52px); margin:22px 0 0; flex-wrap:wrap; justify-content:center; }
+.lp-stat b { display:block; font-size:clamp(22px,3vw,30px); font-weight:600; line-height:1; }
+.lp-stat small { font-size:11px; letter-spacing:.18em; text-transform:uppercase; opacity:.9; }
+
+.lp-intro { padding:34px clamp(24px,5vw,72px) 14px; max-width:1500px; margin:0 auto; text-align:center; }
+.lp-intro .lp-eyebrow { color:var(--sage); letter-spacing:.28em; text-transform:uppercase; font-size:12px; font-weight:600; }
+.lp-intro h2 { color:var(--sage-deep); font-size:clamp(26px,3.4vw,40px); font-weight:600; line-height:1.2; margin:8px 0 14px; }
+.lp-intro p { max-width:760px; color:var(--tr-grey); margin:0 auto; }
+
+.lp-grid-wrap { padding:26px clamp(24px,5vw,72px) 64px; max-width:1500px; margin:0 auto; }
+.lp-grid { display:grid; grid-template-columns:repeat(3, minmax(240px, 330px)); gap:26px; justify-content:center; }
+a.lp-card { display:flex; flex-direction:column; text-decoration:none; border:1px solid var(--tr-line); border-radius:14px; overflow:hidden; background:#fff; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease; }
+a.lp-card:hover, a.lp-card:focus-visible { transform:translateY(-4px); box-shadow:var(--tr-shadow); }
+.lp-card-media { aspect-ratio:16/10; display:flex; align-items:center; justify-content:center; padding:32px; }
+.lp-card-media img { max-width:76%; max-height:62%; object-fit:contain; }
+.lp-card-body { padding:13px 15px 15px; text-align:center; border-top:1px solid var(--tr-line); }
+.lp-card-body h4 { font-size:15.5px; font-weight:600; color:var(--tr-ink); line-height:1.3; }
+.lp-card-body p { font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--sage-deep); font-weight:500; margin-top:3px; }
+a.lp-card:hover .lp-card-body p, a.lp-card:focus-visible .lp-card-body p { color:var(--sage-dark); text-decoration:underline; }
+
+.lp-footer { background:var(--sage); color:#fff; text-align:center; padding:60px 24px; margin-top:40px; }
+.lp-footer img.lp-logo { width:min(230px,62vw); height:auto; display:block; margin:0 auto 10px; }
+.lp-footer p { opacity:.9; font-size:13px; margin-top:8px; }
+
+@media (max-width: 940px) {
+  .lp-grid { grid-template-columns:minmax(240px, 420px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing *, .landing *::before, .landing *::after { transition:none!important; animation:none!important; }
+}
