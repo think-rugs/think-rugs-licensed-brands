@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import './landing.css';
 import './brochure.css';
 
@@ -22,7 +23,10 @@ export default function RootLayout({ children }) {
         <link href={FONTS} rel="stylesheet" />
         <style>{'*{margin:0;padding:0;box-sizing:border-box} html{scroll-behavior:smooth} body.modal-open{overflow:hidden} button{font-family:inherit;cursor:pointer} @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }'}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
