@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { gbp, eur, slug } from '@/lib/catalogue';
 
@@ -31,7 +31,7 @@ function SvgDefs() {
   );
 }
 
-const GLABELS = ['Cutout', 'Lifestyle'];
+const GLABELS = ['Cutout', 'Lifestyle', 'Detail'];
 
 export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
   /* ---------- flat indexes ---------- */
@@ -45,11 +45,19 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
     () => [...new Set(flat.map((e) => e.c.c1).filter(Boolean))].sort(),
     [flat]
   );
-  const hasPhotography = useMemo(() => flat.some((e) => e.c.img.cut || e.c.img.life), [flat]);
+  const hasPhotography = useMemo(() => flat.some((e) => e.c.img.cut || e.c.img.life || e.c.img.detail), [flat]);
+  // collection groups (e.g. Woven / Washable); grouping UI appears with two or more
+  const groups = useMemo(() => {
+    const g = [];
+    data.designs.forEach((d) => { if (d.group && !g.includes(d.group)) g.push(d.group); });
+    return g;
+  }, [data]);
+  const hasGroups = groups.length > 1;
 
   /* ---------- state ---------- */
   const [term, setTerm] = useState('');
   const [colour, setColour] = useState('');
+  const [group, setGroup] = useState('');
   const [imgOnly, setImgOnly] = useState(hasPhotography);
   const [selOnly, setSelOnly] = useState(false);
   const [showTrade, setShowTrade] = useState(true);
@@ -58,6 +66,7 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
   const [railOpen, setRailOpen] = useState(false);
   const [modalCode, setModalCode] = useState(null);
   const [gIdx, setGIdx] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
   const lastFocus = useRef(null);
   const orderRef = useRef([]);
   const touchX = useRef(null);
@@ -94,15 +103,16 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
   const matches = useCallback(
     (e) => {
       const { d, c } = e;
-      const hay = (d.name + ' ' + c.colour + ' ' + c.code + ' ' + c.title + ' ' + c.c1 + ' ' + c.c2).toLowerCase();
+      const hay = (d.name + ' ' + (c.label || '') + ' ' + c.colour + ' ' + c.code + ' ' + c.title + ' ' + c.c1 + ' ' + c.c2).toLowerCase();
       return (
         (!term || hay.includes(term.trim().toLowerCase())) &&
         (!colour || c.c1 === colour || c.c2 === colour) &&
-        (!imgOnly || !!(c.img.cut || c.img.life)) &&
+        (!group || !hasGroups || d.group === group) &&
+        (!imgOnly || !!(c.img.cut || c.img.life || c.img.detail)) &&
         (!selOnly || selected.has(c.code))
       );
     },
-    [term, colour, imgOnly, selOnly, selected]
+    [term, colour, group, hasGroups, imgOnly, selOnly, selected]
   );
 
   const visible = useMemo(() => {
@@ -117,7 +127,7 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
   }, [data, matches]);
 
   const clearFilters = () => {
-    setTerm(''); setColour(''); setImgOnly(hasPhotography); setSelOnly(false);
+    setTerm(''); setColour(''); setGroup(''); setImgOnly(hasPhotography); setSelOnly(false);
   };
   const clearSelection = () => {
     const next = new Set(); persist(next); setSelected(next);
@@ -154,6 +164,7 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
   );
   const closeModal = useCallback(() => {
     setModalCode(null);
+    setLightbox(false);
     document.body.classList.remove('modal-open');
     if (lastFocus.current) lastFocus.current.focus();
   }, []);
@@ -171,6 +182,7 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
     const list = [];
     if (c.img.cut) list.push({ src: c.img.cut, label: GLABELS[0] });
     if (c.img.life) list.push({ src: c.img.life, label: GLABELS[1] });
+    if (c.img.detail) list.push({ src: c.img.detail, label: GLABELS[2] });
     return list;
   }, [modalCode, byCode]);
   const gStep = useCallback(
@@ -184,13 +196,16 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
   useEffect(() => {
     if (!modalCode) return;
     const onKey = (e) => {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') {
+        if (lightbox) setLightbox(false);
+        else closeModal();
+      }
       if (e.key === 'ArrowRight') gStep(1);
       if (e.key === 'ArrowLeft') gStep(-1);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [modalCode, gStep, closeModal]);
+  }, [modalCode, gStep, closeModal, lightbox]);
 
   /* ---------- CSV export ---------- */
   const csvCell = (v) => {
@@ -199,13 +214,16 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
   };
   const exportSelection = () => {
     if (!selected.size) return;
-    const head = ['Product Code', 'Variant Code', 'Description', 'Brand', 'Design', 'Colour', 'Washable',
+    const head = ['Product Code', 'Variant Code', 'Description', 'Brand', 'Design',
+      ...(hasGroups ? ['Collection'] : []), 'Colour', 'Washable',
       'Size (cm)', 'Wholesale Price (GBP)', 'RRP (GBP)', 'Wholesale Price (EUR)', 'RRP (EUR)'];
     const lines = [head.map(csvCell).join(',')];
     flat.forEach(({ d, c }) => {
       if (!selected.has(c.code)) return;
       c.sizes.forEach((s) => {
-        lines.push([c.code, s.variant, c.title + ', ' + s.size, data.brand, d.name, c.colour, 'Yes',
+        lines.push([c.code, s.variant, c.title + ', ' + s.size, data.brand, (c.label || d.name),
+          ...(hasGroups ? [d.group] : []), c.colour,
+          d.features.includes('Washable') ? 'Yes' : 'No',
           s.size, s.trade, s.rrp, s.tradeEur, s.rrpEur].map(csvCell).join(','));
       });
     });
@@ -240,10 +258,10 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
     >
       <SvgDefs />
 
-      <header className="cover" id="top">
+      <header className="cover" id="top" data-cover={theme.COVER_TONE || 'dark'}>
         <Link className="back" href="/">&larr; All licensed brands</Link>
         <img className="logo" src={`/images/logos/${theme.logo_key}.png`} alt={`${data.brand} logo`} />
-        <p className="sub">Washable Rug Collection</p>
+        <p className="sub">{theme.SUB || 'Washable Rug Collection'}</p>
         <p className="season">New 2025</p>
         <a className="enter" href="#catalogue">View the collection</a>
         <p className="presented">Presented by Think Rugs</p>
@@ -268,7 +286,7 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
           </div>
 
           <div className="rail-panel" id="rail-panel">
-          <p className="sub">Washable Rugs, New 2025</p>
+          <p className="sub">{theme.RAIL_SUB || 'Washable Rugs, New 2025'}</p>
           <Link className="allbrands" href="/">&larr; All licensed brands</Link>
 
           <h3>Find a product</h3>
@@ -284,6 +302,15 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
               {allColours.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+          {hasGroups && (
+            <div className="ctl">
+              <label htmlFor="fgroup">Collection</label>
+              <select id="fgroup" value={group} onChange={(e) => setGroup(e.target.value)}>
+                <option value="">All collections</option>
+                {groups.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+          )}
           <label className="toggle">
             <input type="checkbox" checked={imgOnly} onChange={(e) => setImgOnly(e.target.checked)} /> Photographed only
           </label>
@@ -304,18 +331,24 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
             )}
           </div>
           <p className="results">{visible.shown} of {flat.length} colourways shown</p>
-          <a className="dl" href={downloadHref} download>Download full product info (Excel)</a>
+          {downloadHref && (
+            <a className="dl" href={downloadHref} download>Download full product info (Excel)</a>
+          )}
 
           <h3>Designs</h3>
           <nav className="rlinks" aria-label="Designs">
-            {data.designs.map((d) => {
+            {data.designs.map((d, i) => {
               const vis = visible.perDesign.get(d.name).length;
+              const heads = hasGroups && (i === 0 || data.designs[i - 1].group !== d.group);
               return (
-                <a key={d.name} href={'#rg-' + slug(d.name)}
+                <Fragment key={d.name}>
+                {heads && <span className="rgroup">{d.group}</span>}
+                <a href={'#rg-' + slug(d.name)}
                   onClick={() => setRailOpen(false)}
                   className={'rlink' + (activeRange === d.name ? ' active' : '') + (vis ? '' : ' dimmed')}>
                   <span>{d.name}</span><small className="rcount">{vis}</small>
                 </a>
+                </Fragment>
               );
             })}
           </nav>
@@ -329,12 +362,15 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
           </div>
 
           <div>
-            {data.designs.map((d) => {
+            {(() => { let lastGroup = null; return data.designs.map((d) => {
               const vis = visible.perDesign.get(d.name);
               if (!vis.length) return null;
               const variants = d.colourways.reduce((n, c) => n + c.sizes.length, 0);
+              const startsGroup = hasGroups && d.group !== lastGroup;
+              lastGroup = d.group;
               return (
-                <section className="range" key={d.name} id={'rg-' + slug(d.name)} data-range={d.name}>
+                <section className={'range' + (startsGroup ? ' group-start' : '')} key={d.name} id={'rg-' + slug(d.name)} data-range={d.name}>
+                  {startsGroup && <div className="group-divider"><h2>{d.group}</h2></div>}
                   <header className="range-head">
                     <div className="range-title">
                       <h2>{d.name}</h2>
@@ -390,7 +426,7 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
                             </button>
                           </div>
                           <div className="card-body">
-                            <span className="card-code">{d.name}</span>
+                            <span className="card-code">{c.label || d.name}</span>
                             <h4>{c.colour}</h4>
                             <p>{c.c1}{c.c2 && c.c2 !== c.c1 ? ' / ' + c.c2 : ''}</p>
                             <div className="card-foot">
@@ -404,7 +440,7 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
                   </div>
                 </section>
               );
-            })}
+            }); })()}
           </div>
           {visible.shown === 0 && (
             <p className="no-results" style={{ display: 'block' }}>No products match the current filters.</p>
@@ -413,7 +449,7 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
       </div>
 
       <footer>
-        {data.brand}, Washable Rug Collection, New 2025. Presented by Think Rugs.
+        {data.brand}, {theme.SUB || 'Washable Rug Collection'}, New 2025. Presented by Think Rugs.
         <br /><br />
         <span dangerouslySetInnerHTML={{ __html: theme.FOOTER }} />
       </footer>
@@ -435,7 +471,11 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
                 >
                   {gImgs.length ? (
                     <>
-                      <img src={gImgs[gIdx].src} alt={`Product image ${gIdx + 1} of ${gImgs.length}`} />
+                      <img src={gImgs[gIdx].src} alt={`Product image ${gIdx + 1} of ${gImgs.length}`}
+                        className="zoomable" role="button" tabIndex={0}
+                        aria-label="Open larger image"
+                        onClick={(e) => { e.stopPropagation(); setLightbox(true); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLightbox(true); } }} />
                       <span className="glabel">{gImgs[gIdx].label}</span>
                       {gImgs.length > 1 && (
                         <>
@@ -481,7 +521,6 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
                   <div className="feats">
                     {modalEntry.d.features.map((f) => <span className="feat" key={f}>{f}</span>)}
                   </div>
-                  <div className="sizes-wrap">
                   <table className="sizes">
                     <thead>
                       <tr>
@@ -504,21 +543,51 @@ export default function BrandBrochure({ theme, data, downloadHref, selKey }) {
                       ))}
                     </tbody>
                   </table>
-                  </div>
                   <p className="trade-note">Trade prices are wholesale prices.</p>
                   <p className="desc">{modalEntry.c.desc}</p>
                   <div className="spec">
-                    <div className="row"><span className="k">Design</span><span>{modalEntry.d.name}</span></div>
-                    <div className="row"><span className="k">Construction</span><span>{modalEntry.d.construction}</span></div>
-                    <div className="row"><span className="k">Materials</span><span>{modalEntry.d.materials}</span></div>
-                    <div className="row"><span className="k">Pile height</span><span>{modalEntry.d.pile} cm</span></div>
-                    <div className="row"><span className="k">Country of origin</span><span>{modalEntry.d.origin}</span></div>
+                    <div className="row"><span className="k">Design</span><span>{modalEntry.c.label || modalEntry.d.name}</span></div>
+                    {modalEntry.d.construction && <div className="row"><span className="k">Construction</span><span>{modalEntry.d.construction}</span></div>}
+                    {modalEntry.d.materials && <div className="row"><span className="k">Materials</span><span>{modalEntry.d.materials}</span></div>}
+                    {modalEntry.d.pile && <div className="row"><span className="k">Pile height</span><span>{modalEntry.d.pile} cm</span></div>}
+                    {modalEntry.d.origin && <div className="row"><span className="k">Country of origin</span><span>{modalEntry.d.origin}</span></div>}
                   </div>
                 </div>
               </div>
               <button className="close" aria-label="Close" onClick={closeModal}>&times;</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {modalEntry && lightbox && gImgs.length > 0 && (
+        <div className="lightbox open" onClick={(e) => { if (e.target === e.currentTarget) setLightbox(false); }}>
+          <div
+            className="lb-stage"
+            onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              if (touchX.current == null) return;
+              const dx = e.changedTouches[0].clientX - touchX.current;
+              if (Math.abs(dx) > 40) gStep(dx < 0 ? 1 : -1);
+              touchX.current = null;
+            }}
+          >
+            <img src={gImgs[gIdx].src} alt={`Product image ${gIdx + 1} of ${gImgs.length}`} />
+            <span className="glabel">{gImgs[gIdx].label}</span>
+            {gImgs.length > 1 && (
+              <>
+                <button className="gnav prev" aria-label="Previous image"
+                  onClick={(e) => { e.stopPropagation(); gStep(-1); }}>&larr;</button>
+                <button className="gnav next" aria-label="Next image"
+                  onClick={(e) => { e.stopPropagation(); gStep(1); }}>&rarr;</button>
+                <div className="gdots">
+                  {gImgs.map((_, i) => <i key={i} className={i === gIdx ? 'on' : ''} />)}
+                </div>
+                <span className="gcount">{gIdx + 1} / {gImgs.length}</span>
+              </>
+            )}
+          </div>
+          <button className="lb-close" aria-label="Close larger image" onClick={() => setLightbox(false)}>&times;</button>
         </div>
       )}
     </div>

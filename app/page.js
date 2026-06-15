@@ -1,51 +1,58 @@
 import Link from 'next/link';
+import { getStats, getBrandCards } from '@/lib/catalogue';
 
 export const metadata = { title: 'Think Rugs | Licensed Brands' };
 
-const BRANDS = [
-  { name: 'Scion Living',    href: '/scion-living',     logo: '/images/logos/scion.png',     bg: '#262626' },
-  { name: 'Harlequin',       href: '/harlequin',        logo: '/images/logos/harlequin.png', bg: '#262624' },
-  { name: 'Clarke & Clarke', href: '/clarke-and-clarke', logo: '/images/logos/clarke.png',   bg: '#1c1c1b' },
-];
+// Number words for the subline, so the copy reads naturally as brands are added.
+// Falls back to the digit beyond the planned range.
+const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+const numberWord = (n) => (WORDS[n] ? WORDS[n][0].toUpperCase() + WORDS[n].slice(1) : String(n));
+
+// Column count for the trellis grid. Four or fewer sit in a single row. Five or
+// six balance as three by two. Seven or eight fill four by two. Every case lands
+// inside one viewport, so the set is always visible without scrolling.
+const columnsFor = (n) => (n <= 4 ? Math.max(n, 1) : n <= 6 ? 3 : 4);
 
 export default function Landing() {
+  const stats = getStats();
+  const cards = getBrandCards();
+  const cols = columnsFor(cards.length);
   return (
     <div className="landing">
-      <section className="lp-cover" id="top">
-        <img className="lp-logo" src="/images/logos/thinkrugs_cover.jpg" alt="Think Rugs, for every home" />
-        <p className="lp-eyebrow">Trade Presentation</p>
-        <h1>Licensed Brands<span>Our licensed collections, each in its own interactive brochure</span></h1>
-        <div className="lp-stats">
-          <div className="lp-stat"><b>3</b><small>Brands</small></div>
-          <div className="lp-stat"><b>91</b><small>Colourways</small></div>
-          <div className="lp-stat"><b>462</b><small>Product Options</small></div>
+      <header className="lp-canopy">
+        <img className="lp-lockup" src="/images/logos/thinkrugs_cover.jpg" alt="Think Rugs, for every home" />
+        <div className="lp-title">
+          <p className="lp-eyebrow">Trade presentation</p>
+          <h1>Licensed Brands</h1>
+          <p className="lp-sub">{numberWord(stats.brands)} licensed collections, manufactured by Think Rugs. Select a brand to browse its brochure.</p>
         </div>
-      </section>
+        <dl className="lp-meta" aria-label="Collection totals">
+          <div><dt>Brands</dt><dd>{stats.brands}</dd></div>
+          <div><dt>Colourways</dt><dd>{stats.colourways}</dd></div>
+          <div><dt>Product options</dt><dd>{stats.options}</dd></div>
+        </dl>
+      </header>
 
-      <div className="lp-intro" id="brands">
-        <p className="lp-eyebrow">Licensed Collections</p>
-        <h2>Select a brand to browse its brochure</h2>
-        <p>Each brochure presents the brand&apos;s full range with imagery, designs, colourways, sizes, specifications and trade pricing.</p>
-      </div>
-
-      <main className="lp-grid-wrap">
-        <div className="lp-grid">
-          {BRANDS.map((b) => (
-            <Link className="lp-card" href={b.href} key={b.name} aria-label={`${b.name}, open the brochure`}>
-              <span className="lp-card-media" style={{ background: b.bg }}>
-                <img src={b.logo} alt={`${b.name} logo`} />
-              </span>
-              <span className="lp-card-body">
-                <h4>{b.name}</h4>
-                <p>View brochure</p>
-              </span>
-            </Link>
-          ))}
-        </div>
+      <main className="lp-doors" id="brands" data-count={cards.length} style={{ '--cols': cols }}>
+        {cards.map((b) => (
+          <Link className="lp-door" key={b.key} href={b.href} data-tone={b.tone}
+            style={{ background: b.bg, color: b.ink, ...(b.logoWidth ? { '--logo-w': b.logoWidth } : {}) }}
+            aria-label={b.designs > 0
+              ? `${b.name}, ${b.designs} designs, ${b.colourways} colourways, open the brochure`
+              : `${b.name}, collection to follow, open the brochure`}>
+            <span className="lp-door-logo"><img src={b.logo} alt={`${b.name} logo`} /></span>
+            <span className="lp-door-foot">
+              <h2>{b.name}</h2>
+              <p className="lp-door-meta">
+                {b.designs > 0 ? `${b.designs} designs, ${b.colourways} colourways` : 'Collection to follow'}
+              </p>
+              <p className="lp-door-cta">View brochure</p>
+            </span>
+          </Link>
+        ))}
       </main>
 
-      <footer className="lp-footer">
-        <img className="lp-logo" src="/images/logos/thinkrugs_cover.jpg" alt="Think Rugs, for every home" />
+      <footer className="lp-base">
         <p>Think Rugs, Licensed Brands 2026. Prices shown in the brochures are trade prices in GBP and EUR.</p>
       </footer>
     </div>

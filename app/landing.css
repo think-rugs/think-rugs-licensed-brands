@@ -1,45 +1,84 @@
-/* Landing page styles, matching the Think Rugs New Products brochure language. */
+/* Landing page: Think Rugs as the umbrella over its licensed brands.
+   The parent brand is the structure of the page, a sage canopy spanning the
+   top, a hairline stem dropping to each brand door, and a sage keyed base
+   line. The whole presentation fits one viewport on desktop.
+   Note: static fallback declarations precede every clamp() so older engines
+   degrade gracefully. */
 :root {
   --sage:#749981; --sage-deep:#587a66; --sage-dark:#3f5c4b; --sage-tint:#eef3ef; --sage-line:#d8e3da;
-  --tr-ink:#2c332e; --tr-grey:#6e756f; --tr-line:#e4e8e4; --paper:#ffffff; --wash:#fafbfa;
-  --tr-shadow:0 10px 30px rgba(44,51,46,.10);
+  --tr-ink:#2c332e; --tr-grey:#6e756f; --paper:#ffffff; --wash:#f6f8f6;
+  --tr-shadow:0 14px 34px rgba(44,51,46,.16);
 }
-.landing { font-family:'Poppins',-apple-system,'Segoe UI',sans-serif; color:var(--tr-ink); background:var(--paper); font-size:15px; line-height:1.6; }
+.landing { font-family:'Poppins',-apple-system,'Segoe UI',sans-serif; color:var(--tr-ink); background:var(--wash); font-size:15px; line-height:1.55; min-height:100vh; display:flex; flex-direction:column; }
 .landing img { display:block; max-width:100%; }
 .landing a { color:inherit; }
-.landing :focus-visible { outline:3px solid var(--sage); outline-offset:2px; border-radius:4px; }
+.landing :focus-visible { outline:3px solid var(--sage-deep); outline-offset:3px; border-radius:6px; }
 
-.lp-cover { min-height:45vh; background:var(--sage); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:26px 24px 30px; position:relative; }
-.lp-cover img.lp-logo { width:min(295px,58vw); margin-bottom:6px; }
-.lp-cover .lp-eyebrow { letter-spacing:.32em; text-transform:uppercase; font-size:11px; font-weight:500; opacity:.92; margin-bottom:10px; }
-.lp-cover h1 { font-size:clamp(28px,4.2vw,44px); font-weight:600; line-height:1.1; }
-.lp-cover h1 span { font-weight:300; display:block; font-size:.52em; letter-spacing:.04em; margin-top:6px; }
-.lp-stats { display:flex; gap:clamp(20px,5vw,52px); margin:22px 0 0; flex-wrap:wrap; justify-content:center; }
-.lp-stat b { display:block; font-size:clamp(22px,3vw,30px); font-weight:600; line-height:1; }
-.lp-stat small { font-size:11px; letter-spacing:.18em; text-transform:uppercase; opacity:.9; }
+/* ---- Canopy: the parent brand spanning the page ---- */
+.lp-canopy { background:var(--sage); color:#fff; display:flex; align-items:center; padding:18px 40px; padding:18px clamp(22px,4vw,56px); }
+.lp-canopy .lp-lockup { width:148px; flex:none; margin-right:34px; margin-right:clamp(20px,3.5vw,48px); }
+.lp-title { flex:1 1 auto; min-width:0; }
+.lp-eyebrow { letter-spacing:.3em; text-transform:uppercase; font-size:10.5px; font-weight:500; opacity:.92; }
+.lp-title h1 { font-size:30px; font-size:clamp(24px,2.6vw,33px); font-weight:600; line-height:1.12; margin:2px 0 4px; }
+.lp-sub { font-weight:300; font-size:13.5px; opacity:.94; max-width:520px; }
+.lp-meta { display:flex; flex:none; margin-left:32px; margin-left:clamp(18px,3vw,44px); text-align:right; }
+.lp-meta > div { display:flex; flex-direction:column-reverse; margin-left:30px; margin-left:clamp(18px,2.6vw,40px); }
+.lp-meta dd { font-size:24px; font-size:clamp(20px,2vw,26px); font-weight:600; line-height:1.05; }
+.lp-meta dt { font-size:10px; letter-spacing:.18em; text-transform:uppercase; opacity:.88; margin-top:3px; }
 
-.lp-intro { padding:34px clamp(24px,5vw,72px) 14px; max-width:1500px; margin:0 auto; text-align:center; }
-.lp-intro .lp-eyebrow { color:var(--sage); letter-spacing:.28em; text-transform:uppercase; font-size:12px; font-weight:600; }
-.lp-intro h2 { color:var(--sage-deep); font-size:clamp(26px,3.4vw,40px); font-weight:600; line-height:1.2; margin:8px 0 14px; }
-.lp-intro p { max-width:760px; color:var(--tr-grey); margin:0 auto; }
+/* ---- Doors: one per brand, each a miniature of its brochure cover ----
+   A count aware grid (the trellis). One row of four for the current brands,
+   a balanced three by two at six, and a full four by two at the planned eight.
+   Column count arrives as --cols from page.js. Rows are sized 1fr so however
+   many there are, they split the space between canopy and base, so the whole
+   set always lands inside one viewport with no scroll. --stem is the row gap
+   and the height of each tile's stem, so the umbrella ribs read on both rows. */
+.lp-doors {
+  flex:1 1 auto; min-height:0;
+  --stem:24px; --stem:clamp(16px,2.4vh,28px);
+  display:grid; grid-template-columns:repeat(var(--cols,4), minmax(0,1fr)); grid-auto-rows:minmax(0,1fr);
+  gap:var(--stem) 22px; gap:var(--stem) clamp(12px,1.5vw,22px);
+  max-width:1280px; width:100%; margin:0 auto;
+  padding:calc(var(--stem) + 4px) 40px 24px;
+  padding:calc(var(--stem) + 4px) clamp(22px,4vw,56px) clamp(16px,2.4vh,28px);
+}
+a.lp-door { position:relative; display:flex; flex-direction:column; min-height:0; text-decoration:none; color:#fff; border-radius:14px; overflow:hidden; padding:18px 18px; padding:clamp(12px,1.8vh,24px) clamp(14px,1.3vw,20px); transition:box-shadow .18s ease, transform .18s ease; }
+/* light tiles (e.g. white brand marks) get a hairline so they hold their shape on the pale page */
+a.lp-door[data-tone="light"] { border:1px solid var(--sage-line); }
+/* the stem: a hairline rising from each door into the gap above, to the canopy on the top row and into the trellis on the next, the umbrella made visible */
+a.lp-door::before { content:""; position:absolute; top:calc(-1 * var(--stem)); left:50%; margin-left:-1px; width:2px; height:var(--stem); background:var(--sage); }
+a.lp-door[data-tone="light"]::before { top:calc(-1 * var(--stem) - 1px); }
+a.lp-door:hover, a.lp-door:focus-visible { box-shadow:var(--tr-shadow); transform:translateY(-2px); }
+a.lp-door:hover::before, a.lp-door:focus-visible::before { background:var(--sage-dark); }
+.lp-door-logo { flex:1 1 auto; display:flex; align-items:center; justify-content:center; min-height:0; padding:4px; }
+.lp-door-logo img { max-width:78%; max-width:var(--logo-w,78%); max-height:100%; object-fit:contain; }
+.lp-door-foot { flex:none; text-align:center; padding-top:8px; }
+.lp-door-foot h2 { font-size:15.5px; font-size:clamp(14px,1.05vw,16px); font-weight:500; line-height:1.3; }
+.lp-door-meta { font-size:11px; letter-spacing:.1em; text-transform:uppercase; opacity:.62; margin-top:3px; }
+.lp-door-cta { display:inline-block; font-size:11px; letter-spacing:.16em; text-transform:uppercase; font-weight:500; margin-top:8px; padding-bottom:3px; border-bottom:1px solid rgba(255,255,255,.45); border-bottom:1px solid color-mix(in srgb, currentColor 45%, transparent); }
+a.lp-door[data-tone="light"] .lp-door-cta { border-bottom-color:rgba(44,51,46,.4); border-bottom-color:color-mix(in srgb, currentColor 45%, transparent); }
+a.lp-door:hover .lp-door-cta, a.lp-door:focus-visible .lp-door-cta { border-bottom-color:currentColor; }
 
-.lp-grid-wrap { padding:26px clamp(24px,5vw,72px) 64px; max-width:1500px; margin:0 auto; }
-.lp-grid { display:grid; grid-template-columns:repeat(3, minmax(240px, 330px)); gap:26px; justify-content:center; }
-a.lp-card { display:flex; flex-direction:column; text-decoration:none; border:1px solid var(--tr-line); border-radius:14px; overflow:hidden; background:#fff; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease; }
-a.lp-card:hover, a.lp-card:focus-visible { transform:translateY(-4px); box-shadow:var(--tr-shadow); }
-.lp-card-media { aspect-ratio:16/10; display:flex; align-items:center; justify-content:center; padding:32px; }
-.lp-card-media img { max-width:76%; max-height:62%; object-fit:contain; }
-.lp-card-body { padding:13px 15px 15px; text-align:center; border-top:1px solid var(--tr-line); }
-.lp-card-body h4 { font-size:15.5px; font-weight:600; color:var(--tr-ink); line-height:1.3; }
-.lp-card-body p { font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--sage-deep); font-weight:500; margin-top:3px; }
-a.lp-card:hover .lp-card-body p, a.lp-card:focus-visible .lp-card-body p { color:var(--sage-dark); text-decoration:underline; }
+/* ---- Base line: the parent closes the frame ---- */
+.lp-base { flex:none; border-top:1px solid var(--sage-line); background:var(--paper); text-align:center; padding:12px 22px; }
+.lp-base p { font-size:12px; color:var(--tr-grey); }
 
-.lp-footer { background:var(--sage); color:#fff; text-align:center; padding:60px 24px; margin-top:40px; }
-.lp-footer img.lp-logo { width:min(230px,62vw); height:auto; display:block; margin:0 auto 10px; }
-.lp-footer p { opacity:.9; font-size:13px; margin-top:8px; }
-
-@media (max-width: 940px) {
-  .lp-grid { grid-template-columns:minmax(240px, 420px); }
+/* ---- Responsive: below one row the trellis stems retire, the page may scroll ---- */
+@media (max-width: 1080px) {
+  .landing { min-height:0; }
+  .lp-canopy { flex-wrap:wrap; }
+  .lp-meta { width:100%; margin:12px 0 0; text-align:left; }
+  .lp-meta > div { margin:0 36px 0 0; }
+  .lp-doors { grid-template-columns:repeat(2, minmax(0,1fr)) !important; grid-auto-rows:minmax(238px,auto); padding-top:24px; }
+  a.lp-door::before { display:none; }
+}
+@media (max-width: 620px) {
+  .lp-canopy { justify-content:center; text-align:center; }
+  .lp-canopy .lp-lockup { margin:0 0 10px; }
+  .lp-sub { margin:0 auto; }
+  .lp-meta { justify-content:center; }
+  .lp-meta > div { margin:0 14px; }
+  .lp-doors { grid-template-columns:minmax(0,1fr) !important; grid-auto-rows:minmax(220px,auto); }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing *, .landing *::before, .landing *::after { transition:none!important; animation:none!important; }
