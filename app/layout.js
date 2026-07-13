@@ -1,4 +1,3 @@
-import { Analytics } from '@vercel/analytics/next';
 import './landing.css';
 import './brochure.css';
 
@@ -25,7 +24,6 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         {children}
-        <Analytics />
       </body>
     </html>
   );
