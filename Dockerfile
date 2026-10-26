@@ -3,7 +3,7 @@
 # Static export (output: 'export' in next.config.mjs) - no Node process
 # needed in production. Build once, serve out/ as plain static files.
 
-FROM node:20-alpine AS builder
+FROM node:24.22.1-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
